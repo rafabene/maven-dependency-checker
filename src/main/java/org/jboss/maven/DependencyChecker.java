@@ -1,19 +1,25 @@
 package org.jboss.maven;
 
 /*
- * Copyright 2001-2005 The Apache Software Foundation.
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2012, Red Hat, Inc., and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
 import java.io.IOException;
@@ -27,6 +33,11 @@ import java.util.regex.Pattern;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.settings.Proxy;
+import org.jboss.jdf.stacks.client.StacksClient;
+import org.jboss.jdf.stacks.model.Bom;
+import org.jboss.maven.stacks.MavenStacksConfiguration;
+import org.jboss.maven.stacks.MavenStacksMessages;
 
 /**
  * Check project dependencies
@@ -51,40 +62,89 @@ public class DependencyChecker extends AbstractMojo {
      * 
      * @parameter
      */
-    private List<String> excludes;
+    private List<String> excludes = new ArrayList<String>();
 
     /**
+     * Holds all project dependencies
      * 
      * @parameter expression="${project.dependencies}"
      * 
      */
-    private List<Dependency> dependencies;
+    private List<Dependency> dependencies = new ArrayList<Dependency>();
 
+    /**
+     * Proxy Host from Settings.xml
+     * 
+     * @parameter expression="${settings.proxies}"
+     * 
+     */
+    private List<Proxy> proxies;
+    
     /**
      * Dependencies and its problems
      */
     private Map<Dependency, List<String>> nonConformantDependecies = new HashMap<Dependency, List<String>>();
 
+    /**
+     * List of all relocated dependencies
+     */
     private Properties relocatedDependencies = new Properties();
 
-    public void execute() throws MojoExecutionException {
+    /**
+     * List of all available BOM from JDF Stacks
+     */
+    private List<Bom> boms = new ArrayList<Bom>();
+    
+    /**
+     * Read any needed information that is used by this plugin
+     * 
+     * @throws MojoExecutionException 
+     * 
+     */
+    private void setupResources() throws MojoExecutionException {
+        //Load the relocated dependencies
         try {
             relocatedDependencies.load(this.getClass().getResourceAsStream("/mavenrelocated.properties"));
         } catch (IOException e) {
             throw new MojoExecutionException("Problem loading mavenrelocated.properties", e);
         }
+        //Uses stacks-client to query all available BOMs
+        Proxy proxy = proxies.size() == 0?null:proxies.get(0);
+        StacksClient sc = new StacksClient(new MavenStacksConfiguration(proxy), new MavenStacksMessages(getLog()));
+        boms = sc.getStacks().getAvailableBoms();
+    }
+
+    
+    public void execute() throws MojoExecutionException {
+        setupResources();
+        //Process each Dependency
         for (Dependency dependency : dependencies) {
             if (!isExcludedDependency(dependency)) {
                 checkNoRedHatRelease(dependency);
                 checkRelocateDependency(dependency);
+                checkIfHasBomForIt(dependency);
             }
         }
+        //Prints the result
         if (nonConformantDependecies.size() > 0) {
             printExecutionResult();
+            //Should fail the build?
             if (failBuild) {
                 throw new MojoExecutionException("Project has non conformant Depencies. Check the logs above.");
             }
         }
+    }
+
+
+    /**
+     * 
+     * Check if this dependency has a BOM (Bill of Materials) for it
+     * 
+     * @param dependency
+     */
+    private void checkIfHasBomForIt(Dependency dependency) {
+       
+        
     }
 
     /**
@@ -110,19 +170,22 @@ public class DependencyChecker extends AbstractMojo {
      * @param dependency
      */
     private void checkRelocateDependency(Dependency dependency) {
-        String relocated = relocatedDependencies.getProperty(dependency.getGroupId());
-        // If contains a relocated Dependency
-        if (relocated != null) {
-            String[] proposed = relocated.split("[|]");
-            StringBuilder sb = new StringBuilder("You shoud replace this dependency by: \n");
-            for (String dep : proposed) {
-                sb.append("\t\t - " + dep);
-                // Add 'or' until the last item
-                if (dep != proposed[proposed.length - 1]) {
-                    sb.append("\n\t\t or \n");
+        for (Object o : relocatedDependencies.keySet()) {
+            String key = (String) o;
+            // Check the if groupdId or artifactId contains any relocated dependency
+            if (dependency.getGroupId().contains(key) || dependency.getArtifactId().contains(key)) {
+                String relocated = relocatedDependencies.getProperty(key);
+                String[] proposed = relocated.split("[|]");
+                StringBuilder sb = new StringBuilder("You shoud replace this dependency by: \n");
+                for (String dep : proposed) {
+                    sb.append("\t\t - " + dep);
+                    // Add 'or' until the last item
+                    if (dep != proposed[proposed.length - 1]) {
+                        sb.append("\n\t\t or \n");
+                    }
                 }
+                addIssueToDepency(dependency, sb.toString());
             }
-            addIssueToDepency(dependency, sb.toString());
         }
     }
 
