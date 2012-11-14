@@ -4,7 +4,15 @@ maven-dependency-checker
 This maven plugin verififies the project dependencies to check:
 
 - If this dependency is a Red Hat release (example: org.hibernate:hibernate:1.2.3-redhat-1)
-- if this dependency should be replaced by a relocated (example: if they should use org.jboss.spec:javax.xml.ws:ws-api rather than javax.xml.ws:ws-api)
+- If this dependency should be replaced by a relocated (example: if they should use org.jboss.spec:javax.xml.ws:ws-api rather than javax.xml.ws:ws-api)
+- If this dependency has a BOM (Bill of Material) for it
+
+Executing from the commmand line
+---
+You can execute this plugin typing:
+
+        mvn org.jboss.maven:dependency-checker:check
+        
 
 Configuring this plugin on you project 
 ---
@@ -45,6 +53,10 @@ You can add the following configuration to each of you dependencies that you wan
             </excludes>
         </configuration>
 
+You can also add the `checker.excludes` parameter if running from command line. Example:
+
+        mvn org.jboss.maven:dependency-checker:check -Dchecker.excludes=javax.xml:jaxb-impl,javax.ejb:ejb-api
+
 
 Failing the build
 ---
@@ -55,5 +67,7 @@ You can instruct this plugin to fail the build if found some issues on the verif
              <failBuild>true</failBuild>
         </configuration>
 
+You can also add the `checker.failBuild` parameter if running from commandLine:
 
+        mvn org.jboss.maven:dependency-checker:check -Dchecker.failBuild=true
 
