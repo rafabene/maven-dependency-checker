@@ -11,7 +11,7 @@ Executing from the commmand line
 ---
 You can execute this plugin typing:
 
-        mvn org.jboss.maven:dependency-checker:check
+        mvn org.jboss.maven.plugins:dependency-checker:check
         
 
 Configuring this plugin on you project 
@@ -24,7 +24,7 @@ Add the following to your pom.xml
         . . .
         <plugins>
             <plugin>
-                <groupId>org.jboss.maven</groupId>
+                <groupId>org.jboss.maven.plugins</groupId>
                 <artifactId>dependency-checker</artifactId>
                 <version>1.0-SNAPSHOT</version>
                 <executions>
@@ -55,7 +55,7 @@ You can add the following configuration to each of you dependencies that you wan
 
 You can also add the `checker.excludes` parameter if running from command line. Example:
 
-        mvn org.jboss.maven:dependency-checker:check -Dchecker.excludes=javax.xml:jaxb-impl,javax.ejb:ejb-api
+        mvn org.jboss.maven.plugins:dependency-checker:check -Dchecker.excludes=javax.xml:jaxb-impl,javax.ejb:ejb-api
 
 
 Failing the build
@@ -69,5 +69,5 @@ You can instruct this plugin to fail the build if found some issues on the verif
 
 You can also add the `checker.failBuild` parameter if running from commandLine:
 
-        mvn org.jboss.maven:dependency-checker:check -Dchecker.failBuild=true
+        mvn org.jboss.maven.plugins:dependency-checker:check -Dchecker.failBuild=true
 

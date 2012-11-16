@@ -20,7 +20,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.maven.dependency;
+package org.jboss.maven.plugins.dependency;
 
 /**
  * @author <a href="mailto:benevides@redhat.com">Rafael Benevides</a>

@@ -1,4 +1,4 @@
-package org.jboss.maven;
+package org.jboss.maven.plugins;
 
 /*
  * JBoss, Home of Professional Open Source.
@@ -45,9 +45,9 @@ import org.apache.maven.repository.RepositorySystem;
 import org.apache.maven.settings.Proxy;
 import org.jboss.jdf.stacks.client.StacksClient;
 import org.jboss.jdf.stacks.model.BomVersion;
-import org.jboss.maven.dependency.MavenDependency;
-import org.jboss.maven.stacks.MavenStacksConfiguration;
-import org.jboss.maven.stacks.MavenStacksMessages;
+import org.jboss.maven.plugins.dependency.MavenDependency;
+import org.jboss.maven.plugins.stacks.MavenStacksConfiguration;
+import org.jboss.maven.plugins.stacks.MavenStacksMessages;
 
 /**
  * Check project dependencies
@@ -337,7 +337,7 @@ public class DependencyChecker extends AbstractMojo {
      */
     private void checkNoRedHatRelease(Dependency dependency) {
         if (!patternRedHat.matcher(dependency.getVersion()).matches()) {
-            addIssueToDepency(dependency, "This dependency isn't a Red Hat Release (-redhat-N suffix)");
+            addIssueToDepency(dependency, "This dependency isn't a Red Hat Release *");
         }
 
     }
@@ -358,12 +358,23 @@ public class DependencyChecker extends AbstractMojo {
      * Prints detailed infornation about non conformant dependencies and it issues
      */
     private void printExecutionResult() {
+        StringBuilder sb = new StringBuilder();
         for (Dependency dependency : nonConformantDependecies.keySet()) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("\n- " + dependency + "\n");
+            sb.append(String.format("\n- Dependency: %s:%s:%s\n", dependency.getGroupId(), dependency.getArtifactId(),
+                    dependency.getVersion()));
             for (String issue : nonConformantDependecies.get(dependency)) {
                 sb.append("\t- " + issue + "\n");
             }
+        }
+        // Add instructions about Red Hat Release
+        sb.append("\n* NOTE: Red Hat release dependencies has '-redhat-N' suffix in its version number. " +
+        		"You should configure a EAP Maven repository and use only those artifact versions provided by EAP Maven Repository." +
+        		"\n\t - More information: https://access.redhat.com/knowledge/docs/en-US/JBoss_Enterprise_Application_Platform/6/html/Development_Guide/Configure_the_JBoss_Enterprise_Application_Platform_Maven_Repository_Using_the_Project_POM.html" +
+        		"\n\t - EAP Maven Repository Download: https://access.redhat.com/jbossnetwork/restricted/listSoftware.html");
+        // choose the right log level based on failBuild property
+        if (failBuild) {
+            getLog().error(sb);
+        } else {
             getLog().warn(sb);
         }
     }

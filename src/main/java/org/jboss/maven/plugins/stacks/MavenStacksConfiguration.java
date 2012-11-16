@@ -20,7 +20,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.maven.stacks;
+package org.jboss.maven.plugins.stacks;
 
 import org.apache.maven.settings.Proxy;
 import org.jboss.jdf.stacks.client.DefaultStacksClientConfiguration;
