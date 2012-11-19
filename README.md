@@ -72,7 +72,7 @@ You can also add the `checker.failBuild` parameter if running from commandLine:
         mvn org.jboss.maven.plugins:dependency-checker:check -Dchecker.failBuild=true
 
 
-Building, installing and testing the plugin
+Building, testing and installing the plugin
 ===========================================
 
 
@@ -93,4 +93,4 @@ To build and install this plugin you need:
         mvn install
 This will build and install the plugin to your local directory.
 
-4. Use the plugin as described on *Executing from the commmand line* or *Configuring this plugin on you project* section
+4. Use the plugin as described on **Executing from the commmand line** or **Configuring this plugin on you project** section
