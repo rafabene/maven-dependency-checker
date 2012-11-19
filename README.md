@@ -71,3 +71,26 @@ You can also add the `checker.failBuild` parameter if running from commandLine:
 
         mvn org.jboss.maven.plugins:dependency-checker:check -Dchecker.failBuild=true
 
+
+Building, installing and testing the plugin
+===========================================
+
+
+This Maven plugin uses the Maven build mechanism for its building.
+
+To build and install this plugin you need:
+
+1. Get the source code
+
+        git clone git@github.com:jboss/maven-dependency-checker.git maven-dependency-checker
+
+2. Change the directory
+
+        cd maven-dependency-checker
+
+3. Run the install command
+
+        mvn install
+This will build and install the plugin to your local directory.
+
+4. Use the plugin as described on *Executing from the commmand line* or *Configuring this plugin on you project* section
